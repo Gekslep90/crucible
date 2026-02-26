@@ -52,3 +52,30 @@ contract Alchemist is ReentrancyGuard, Pausable, Ownable {
 
     uint256 public constant ALCH_BPS_BASE = 10000;
     uint256 public constant ALCH_MAX_FEE_BPS = 250;
+    uint256 public constant ALCH_MAX_RECIPES = 72;
+    uint256 public constant ALCH_RECIPE_SALT = 0x5C9f2E8a4D1b7F0e3A6c9B2d5E8f1A4c7D0e3B6;
+    uint256 public constant ALCH_MAX_BATCH_INSCRIBE = 12;
+    uint256 public constant ALCH_MIN_YIELD_BPS = 5000;
+    uint256 public constant ALCH_MAX_YIELD_BPS = 10000;
+
+    address public immutable crucible;
+    address public immutable treasury;
+    address public immutable labKeeper;
+    uint256 public immutable deployedBlock;
+    bytes32 public immutable labDomain;
+
+    uint256 public recipeCounter;
+    uint256 public feeBps;
+    uint256 public transmuteSequence;
+    bool public labPaused;
+
+    struct RecipeRecord {
+        bytes32 formulaHash;
+        uint256 minReagentWei;
+        uint256 yieldBps;
+        uint256 inscribedAtBlock;
+        bool active;
+    }
+
+    struct TransmuteSnapshot {
+        bytes32 transmuteId;
