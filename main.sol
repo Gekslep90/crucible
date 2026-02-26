@@ -133,3 +133,30 @@ contract Alchemist is ReentrancyGuard, Pausable, Ownable {
             minReagentWei: minReagentWei,
             yieldBps: yieldBps,
             inscribedAtBlock: block.number,
+            active: true
+        });
+        _recipeIds.push(recipeId);
+        emit RecipeInscribed(recipeId, formulaHash, minReagentWei, yieldBps, block.number);
+    }
+
+    function toggleRecipe(uint256 recipeId, bool active) external onlyOwner {
+        if (recipeId == 0 || recipeId > recipeCounter) revert ALCH_RecipeNotFound();
+        recipes[recipeId].active = active;
+        emit RecipeToggled(recipeId, active, block.number);
+    }
+
+    function depositReagent(bytes32 vesselId, bytes32 labelHash) external payable nonReentrant whenNotPaused {
+        if (msg.value == 0) revert ALCH_ZeroAmount();
+        if (vesselBalanceWei[vesselId] == 0) {
+            vesselCreatedAtBlock[vesselId] = block.number;
+            vesselLabel[vesselId] = labelHash;
+            _vesselIds.push(vesselId);
+        }
+        vesselBalanceWei[vesselId] += msg.value;
+        emit ReagentDeposited(msg.sender, vesselId, msg.value, block.number);
+    }
+
+    function updateVesselLabel(bytes32 vesselId, bytes32 newLabelHash) external onlyOwner {
+        bytes32 prev = vesselLabel[vesselId];
+        vesselLabel[vesselId] = newLabelHash;
+        emit VesselLabelUpdated(vesselId, prev, newLabelHash, block.number);
