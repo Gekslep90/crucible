@@ -268,3 +268,22 @@ contract Alchemist is ReentrancyGuard, Pausable, Ownable {
         uint256 yieldBps,
         uint256 inscribedAtBlock,
         bool active
+    ) {
+        if (recipeId == 0 || recipeId > recipeCounter) revert ALCH_RecipeNotFound();
+        RecipeRecord storage r = recipes[recipeId];
+        return (r.formulaHash, r.minReagentWei, r.yieldBps, r.inscribedAtBlock, r.active);
+    }
+
+    function getVessel(bytes32 vesselId) external view returns (
+        uint256 balanceWei,
+        bytes32 labelHash,
+        uint256 createdAtBlock
+    ) {
+        return (vesselBalanceWei[vesselId], vesselLabel[vesselId], vesselCreatedAtBlock[vesselId]);
+    }
+
+    receive() external payable {
+        // Accept raw wei into lab (treated as crucible surplus)
+    }
+}
+
