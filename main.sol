@@ -187,3 +187,30 @@ contract Alchemist is ReentrancyGuard, Pausable, Ownable {
             block.number,
             transmuteSequence++,
             beneficiary,
+            vesselId,
+            recipeId,
+            reagentWei,
+            block.prevrandao
+        ));
+
+        transmuteSnapshots[transmuteId] = TransmuteSnapshot({
+            transmuteId: transmuteId,
+            beneficiary: beneficiary,
+            recipeId: recipeId,
+            reagentWei: reagentWei,
+            yieldWei: yieldWei,
+            feeWei: feeWei,
+            atBlock: block.number
+        });
+
+        recipeTransmuteCount[recipeId]++;
+        recipeVolumeWei[recipeId] += reagentWei;
+
+        (bool okNet,) = beneficiary.call{value: netWei}("");
+        if (!okNet) revert ALCH_TransferFailed();
+        (bool okFee,) = treasury.call{value: feeWei}("");
+        if (!okFee) revert ALCH_TransferFailed();
+
+        emit TransmutationResolved(transmuteId, beneficiary, recipeId, reagentWei, yieldWei, feeWei, block.number);
+    }
+
