@@ -106,3 +106,30 @@ contract Alchemist is ReentrancyGuard, Pausable, Ownable {
         crucible = address(0xE8f2A4C6b1D9e3F7a0B5c8E2d4F6A9b1C3e5D7);
         treasury = address(0x9C1e5F3a7B0d2E6f8A4c1B7e9D3F5a0C2E6b8);
         labKeeper = address(0x4F7b2D9e1A6c0E3f8B5d2A9c7E1F4b0D6e3A8);
+        deployedBlock = block.number;
+        labDomain = keccak256(abi.encodePacked("Alchemist_", block.chainid, block.prevrandao, ALCH_RECIPE_SALT));
+        feeBps = 8;
+    }
+
+    function setLabPaused(bool paused) external onlyOwner {
+        labPaused = paused;
+        emit LabPauseToggled(paused);
+    }
+
+    function setFeeBps(uint256 newFeeBps) external onlyOwner {
+        if (newFeeBps > ALCH_MAX_FEE_BPS) revert ALCH_InvalidFeeBps();
+        uint256 prev = feeBps;
+        feeBps = newFeeBps;
+        emit FeeBpsUpdated(prev, newFeeBps, block.number);
+    }
+
+    function inscribeRecipe(bytes32 formulaHash, uint256 minReagentWei, uint256 yieldBps) external onlyOwner returns (uint256 recipeId) {
+        if (formulaHash == bytes32(0)) revert ALCH_InvalidFormula();
+        if (yieldBps < ALCH_MIN_YIELD_BPS || yieldBps > ALCH_MAX_YIELD_BPS) revert ALCH_InvalidYieldBps();
+        if (recipeCounter >= ALCH_MAX_RECIPES) revert ALCH_MaxRecipesReached();
+        recipeId = ++recipeCounter;
+        recipes[recipeId] = RecipeRecord({
+            formulaHash: formulaHash,
+            minReagentWei: minReagentWei,
+            yieldBps: yieldBps,
+            inscribedAtBlock: block.number,
