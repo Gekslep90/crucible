@@ -214,3 +214,30 @@ contract Alchemist is ReentrancyGuard, Pausable, Ownable {
         emit TransmutationResolved(transmuteId, beneficiary, recipeId, reagentWei, yieldWei, feeWei, block.number);
     }
 
+    function withdrawCrucible(uint256 amountWei) external onlyOwner nonReentrant {
+        if (amountWei == 0) revert ALCH_ZeroAmount();
+        uint256 bal = address(this).balance;
+        if (amountWei > bal) amountWei = bal;
+        (bool ok,) = crucible.call{value: amountWei}("");
+        if (!ok) revert ALCH_TransferFailed();
+        emit CrucibleWithdrawn(crucible, amountWei, block.number);
+    }
+
+    function batchInscribeRecipes(
+        bytes32[] calldata formulaHashes,
+        uint256[] calldata minReagentWeis,
+        uint256[] calldata yieldBpsList
+    ) external onlyOwner returns (uint256[] memory recipeIds) {
+        uint256 n = formulaHashes.length;
+        if (n != minReagentWeis.length || n != yieldBpsList.length) revert ALCH_ArrayLengthMismatch();
+        if (n == 0) revert ALCH_ZeroRecipes();
+        if (n > ALCH_MAX_BATCH_INSCRIBE) revert ALCH_BatchTooLarge();
+        if (recipeCounter + n > ALCH_MAX_RECIPES) revert ALCH_MaxRecipesReached();
+
+        recipeIds = new uint256[](n);
+        for (uint256 i; i < n;) {
+            if (formulaHashes[i] == bytes32(0)) revert ALCH_InvalidFormula();
+            if (yieldBpsList[i] < ALCH_MIN_YIELD_BPS || yieldBpsList[i] > ALCH_MAX_YIELD_BPS) revert ALCH_InvalidYieldBps();
+            uint256 recipeId = ++recipeCounter;
+            recipes[recipeId] = RecipeRecord({
+                formulaHash: formulaHashes[i],
