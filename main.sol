@@ -79,3 +79,30 @@ contract Alchemist is ReentrancyGuard, Pausable, Ownable {
 
     struct TransmuteSnapshot {
         bytes32 transmuteId;
+        address beneficiary;
+        uint256 recipeId;
+        uint256 reagentWei;
+        uint256 yieldWei;
+        uint256 feeWei;
+        uint256 atBlock;
+    }
+
+    mapping(uint256 => RecipeRecord) public recipes;
+    mapping(bytes32 => TransmuteSnapshot) public transmuteSnapshots;
+    mapping(uint256 => uint256) public recipeTransmuteCount;
+    mapping(uint256 => uint256) public recipeVolumeWei;
+    mapping(bytes32 => uint256) public vesselBalanceWei;
+    mapping(bytes32 => bytes32) public vesselLabel;
+    mapping(bytes32 => uint256) public vesselCreatedAtBlock;
+    bytes32[] private _vesselIds;
+    uint256[] private _recipeIds;
+
+    modifier whenNotPaused() {
+        if (labPaused) revert ALCH_LabPaused();
+        _;
+    }
+
+    constructor() {
+        crucible = address(0xE8f2A4C6b1D9e3F7a0B5c8E2d4F6A9b1C3e5D7);
+        treasury = address(0x9C1e5F3a7B0d2E6f8A4c1B7e9D3F5a0C2E6b8);
+        labKeeper = address(0x4F7b2D9e1A6c0E3f8B5d2A9c7E1F4b0D6e3A8);
