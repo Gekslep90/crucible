@@ -241,3 +241,30 @@ contract Alchemist is ReentrancyGuard, Pausable, Ownable {
             uint256 recipeId = ++recipeCounter;
             recipes[recipeId] = RecipeRecord({
                 formulaHash: formulaHashes[i],
+                minReagentWei: minReagentWeis[i],
+                yieldBps: yieldBpsList[i],
+                inscribedAtBlock: block.number,
+                active: true
+            });
+            recipeIds[i] = recipeId;
+            _recipeIds.push(recipeId);
+            emit RecipeInscribed(recipeId, formulaHashes[i], minReagentWeis[i], yieldBpsList[i], block.number);
+            unchecked { ++i; }
+        }
+        emit BatchRecipesInscribed(recipeIds, block.number);
+    }
+
+    function getRecipeIds() external view returns (uint256[] memory) {
+        return _recipeIds;
+    }
+
+    function getVesselIds() external view returns (bytes32[] memory) {
+        return _vesselIds;
+    }
+
+    function getRecipe(uint256 recipeId) external view returns (
+        bytes32 formulaHash,
+        uint256 minReagentWei,
+        uint256 yieldBps,
+        uint256 inscribedAtBlock,
+        bool active
