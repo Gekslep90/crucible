@@ -25,3 +25,30 @@ contract Alchemist is ReentrancyGuard, Pausable, Ownable {
         uint256 feeWei,
         uint256 atBlock
     );
+    event CrucibleWithdrawn(address indexed to, uint256 amountWei, uint256 atBlock);
+    event LabPauseToggled(bool paused);
+    event FeeBpsUpdated(uint256 previousBps, uint256 newBps, uint256 atBlock);
+    event VesselLabelUpdated(bytes32 indexed vesselId, bytes32 previousLabel, bytes32 newLabel, uint256 atBlock);
+    event BatchRecipesInscribed(uint256[] recipeIds, uint256 atBlock);
+
+    error ALCH_ZeroAddress();
+    error ALCH_ZeroAmount();
+    error ALCH_LabPaused();
+    error ALCH_RecipeNotFound();
+    error ALCH_RecipeInactive();
+    error ALCH_InvalidFeeBps();
+    error ALCH_TransferFailed();
+    error ALCH_Reentrancy();
+    error ALCH_NotKeeper();
+    error ALCH_MaxRecipesReached();
+    error ALCH_RecipeAlreadyExists();
+    error ALCH_InsufficientReagent();
+    error ALCH_ArrayLengthMismatch();
+    error ALCH_BatchTooLarge();
+    error ALCH_ZeroRecipes();
+    error ALCH_VesselNotFound();
+    error ALCH_InvalidYieldBps();
+    error ALCH_InvalidFormula();
+
+    uint256 public constant ALCH_BPS_BASE = 10000;
+    uint256 public constant ALCH_MAX_FEE_BPS = 250;
