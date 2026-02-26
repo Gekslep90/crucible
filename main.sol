@@ -160,3 +160,30 @@ contract Alchemist is ReentrancyGuard, Pausable, Ownable {
         bytes32 prev = vesselLabel[vesselId];
         vesselLabel[vesselId] = newLabelHash;
         emit VesselLabelUpdated(vesselId, prev, newLabelHash, block.number);
+    }
+
+    function resolveTransmutation(
+        address beneficiary,
+        bytes32 vesselId,
+        uint256 recipeId,
+        uint256 reagentWei
+    ) external nonReentrant whenNotPaused returns (bytes32 transmuteId, uint256 yieldWei, uint256 feeWei) {
+        if (msg.sender != labKeeper) revert ALCH_NotKeeper();
+        if (beneficiary == address(0)) revert ALCH_ZeroAddress();
+        if (recipeId == 0 || recipeId > recipeCounter) revert ALCH_RecipeNotFound();
+        RecipeRecord storage rec = recipes[recipeId];
+        if (!rec.active) revert ALCH_RecipeInactive();
+        if (reagentWei < rec.minReagentWei) revert ALCH_InsufficientReagent();
+        if (vesselBalanceWei[vesselId] < reagentWei) revert ALCH_InsufficientReagent();
+
+        vesselBalanceWei[vesselId] -= reagentWei;
+        yieldWei = (reagentWei * rec.yieldBps) / ALCH_BPS_BASE;
+        feeWei = (yieldWei * feeBps) / ALCH_BPS_BASE;
+        uint256 netWei = yieldWei - feeWei;
+
+        transmuteId = keccak256(abi.encodePacked(
+            "Alchemist_Transmute",
+            block.chainid,
+            block.number,
+            transmuteSequence++,
+            beneficiary,
